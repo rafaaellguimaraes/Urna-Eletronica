@@ -16,16 +16,23 @@ let numeros = document.querySelector('.d-1-3')
 //Variaveis de ambiente
 let etapaAtual = 0
 let numero = ''
+let votoBranco = false
 
 //Função para setar o inicio da nossa etapa
 function comecarEtapa(){
     //Aqui a variavel etapa vai receber a primeira etapa de etapas
     let etapa = etapas[etapaAtual]
     let numeroHtml = ''
+    numero = ''
+    votoBranco = false
 
     //Aqui eu vou percorrer quantos numeros tem o candidato que vem do arquivo etapas.js e adiciono um quadradinho para cada vez que ele incrementar
     for(let i=0; i<etapa.numeros; i++){
-        numeroHtml += '<div class="numero"></div>'
+        if(i === 0){
+            numeroHtml += '<div class="numero piscar"></div>'
+        }else{
+            numeroHtml += '<div class="numero"></div>'
+        }
     }
 
     seuVotoPara.style.display= 'none'
@@ -36,25 +43,94 @@ function comecarEtapa(){
     numeros.innerHTML = numeroHtml
 }
 
-//Função que preenche os quadradinhos com os numeros
+//Função que atualiza a interface da urna
 function atualizaInterface(){
+    let etapa = etapas[etapaAtual]
+    //Aqui eu verifico se o numero que foi digitado pertence a algum candidato
+    let candidato = etapa.candidatos.filter((item) => {
+        if(item.numero === numero){
+            return true
+        }else{
+            return false
+        }
+    })
     
+    //Se achou candidato a gente preenche as info na tela
+    if(candidato.length > 0){
+        candidato = candidato[0]
+        seuVotoPara.style.display = 'block'
+        aviso.style.display = 'block'
+        descricao.innerHTML = `Nome: ${candidato.nome}<br/>Partido: ${candidato.partido}`
+        //Definir a foto do candidato
+        let fotosHtml= ''
+        for(let i in candidato.fotos){
+            if(candidato.fotos[i].small){
+                fotosHtml += `<div class="d-1-image small"><img src="images/${candidato.fotos[i].url}" alt="Bart Image"/>${candidato.fotos[i].legenda}</div>`
+            }else {
+                fotosHtml += `<div class="d-1-image"><img src="images/${candidato.fotos[i].url}" alt="Bart Image"/>${candidato.fotos[i].legenda}</div>`
+            }
+        }
+        lateral.innerHTML = fotosHtml
+    } else {
+        seuVotoPara.style.display = 'block'
+        aviso.style.display = 'block'
+        descricao.innerHTML = '<div class="aviso--grande piscar">VOTO NULO</div>'
+    }
+
 }
 
 //CONTROLE DOS TECLADOS (BOTOES)
+//Função que preenche os quadradinhos com os numeros
 function clicou(n){
-    alert("Clicou em "+n)
+    //Verifico se existe um numero piscando, se não tiver ele retorna null
+    let elNumero = document.querySelector('.numero.piscar')
+    if(elNumero !== null){
+        elNumero.innerHTML = n;
+        numero = `${numero}${n}`
+
+        //Quando preencher o primeiro numero, eu tenho que tirar o piscar do primeiro quadrado e passar para o proximo
+        elNumero.classList.remove('piscar')
+        //Acha o proximo elemento e adiciona a classe piscar
+        if(elNumero.nextElementSibling !== null){
+            elNumero.nextElementSibling.classList.add('piscar')
+        }else{
+            atualizaInterface();
+        }
+    }
 }
 
 function branco(){
-    alert("Clicou em BRANCO")
+        numero = ''
+        votoBranco = true
+        seuVotoPara.style.display = 'block'
+        aviso.style.display = 'block'
+        numeros.innerHTML = ''
+        descricao.innerHTML = '<div class="aviso--grande piscar">VOTO EM BRANCO</div>'
+        lateral.innerHTML = ''
 }
 
 function corrige(){
-    alert("Clicou em CORRIGE")
+    comecarEtapa()
 }
 function confirma(){
-    alert("Clicou em CONFIRMA")
+    let etapa = etapas[etapaAtual]
+    let votoConfirmado = false
+
+    if(votoBranco === true){
+        votoConfirmado = true
+    }else if(numero.length === etapa.numeros){
+        votoConfirmado = true
+    }
+
+    //Passa para a proxima etapa
+    if(votoConfirmado){
+        etapaAtual ++
+        if(etapas[etapaAtual] !== undefined){
+            comecarEtapa();
+        }else{
+            document.querySelector('.tela').innerHTML = '<div class="aviso--gigante piscar">FIM</div>'
+        }
+    }
 }
 
 comecarEtapa()
